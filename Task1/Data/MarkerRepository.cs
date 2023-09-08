@@ -22,13 +22,11 @@ namespace Task1.Data
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    // Check is the reader has any rows at all before starting to read.
                     if (reader.HasRows)
                     {
-                        // Read advances to the next row.
                         while (reader.Read())
                         {
-                            var m = new Marker()
+                            var m = new Marker(new GMap.NET.PointLatLng())
                             {
                                 ID = reader.GetInt32(reader.GetOrdinal("ID")),
                                 Latitude = reader.GetDouble(reader.GetOrdinal("Latitude")),
@@ -42,66 +40,48 @@ namespace Task1.Data
             return markers.ToArray();
         }
 
-        public void addMarker(double latitude,double longitude)
+        public void addMarker(string latitude, string longitude)
         {
             conn = new DBUtils().GetDBConnection();
+
+            latitude = latitude.Replace(',', '.');
+            longitude = longitude.Replace(',', '.');
+
             using (conn) 
-            using (SqlCommand cmd = new SqlCommand("INSERT INTO MARKER VALUES " + $"({latitude}, {longitude})", conn))
+            using (SqlCommand cmd = new SqlCommand("INSERT INTO MARKER (Latitude,Longitude) VALUES " + $"({latitude}, {longitude})", conn))
             {
                 conn.Open();
-                cmd.ExecuteNonQuery();
                 try
                 {
-                    if (cmd.ExecuteNonQuery() > 0)
-                        Console.WriteLine("INSERT statement successful");
-                    else
-                        Console.WriteLine("Insert statement FAILED!");
+                    cmd.ExecuteNonQuery();
                 }
                 catch
-                {
-                    Console.WriteLine("Error occurred while attempting INSERT.");
-                }
-                
+                { }
             }
+        }
 
+        public void updateMarker(int? ID, double latitude, double longitude)
+        {
+            conn = new DBUtils().GetDBConnection();
+
+            var lat = latitude.ToString().Replace(',', '.');
+            var lng = longitude.ToString().Replace(',', '.');
+            
+            using (conn)
+            using (SqlCommand cmd = new SqlCommand($"UPDATE MARKER set latitude = {lat},Longitude = {lng} WHERE ID = {ID}", conn))
+            {
+                conn.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch
+                { }
+
+            }
         }
 
 
-        private static Marker[] markers = new Marker[]
-        {
-            new Marker()
-            {
-                // Moscow
-                ID = 1,
-                Latitude= 55.75393,
-                Longitude= 37.620795
-            },
-
-            new Marker()
-            {
-                // Ermitaj
-                ID = 2,
-                Latitude= 59.9409876,
-                Longitude= 30.3129961
-            },
-            new Marker()
-            {
-                // Zimniy
-                ID = 3,
-                Latitude= 59.94028,
-                Longitude= 30.31389,
-            },
-
-            new Marker()
-            {
-                // Lenina
-                ID = 4,
-                Latitude= 55.030278,
-                Longitude= 82.921389,
-            }
-
-
-
-        };
+        
     }
 }
